@@ -39,9 +39,10 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, watch, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
 import {
   BarChartOutlined,
   ApartmentOutlined,
@@ -50,7 +51,20 @@ import {
   MenuUnfoldOutlined,
   MenuFoldOutlined,
 } from '@ant-design/icons-vue';
-const selectedKeys = ref<string[]>(['Bubbles']);
+
+const selectedKeys = ref<string[]>([]);
+
+const syncMenuHighlight = () => {
+  // 例如 /layout/Bubbles
+  const match = route.path.match(/\/layout\/(\w+)/);
+  if (match) {
+    selectedKeys.value = [match[1]];
+  }
+};
+
+onMounted(syncMenuHighlight);
+watch(() => route.path, syncMenuHighlight);
+
 const collapsed = ref<boolean>(false);
 const handleMenuSelect = ({ key }: { key: string }) => {
   router.push(`/layout/${key}`);

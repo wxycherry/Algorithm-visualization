@@ -14,6 +14,8 @@ const regionColors = [
   'rgba(246,229,141,0.18)', // 区域3
   'rgba(255,190,118,0.18)'  // 区域4
 ]
+// 新增：保存最后一次高亮的regionMap
+const lastRegionMap = ref<number[][] | undefined>(undefined)
 
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -69,6 +71,8 @@ async function chessboardCover(board: number[][], size: number, top: number, lef
     }
   }
   updateBoard(board, regionMap)
+  // 保存最后一次高亮
+  lastRegionMap.value = regionMap.map(row => [...row])
   await sleep(400)
   updateBoard(board) // 恢复正常
   await sleep(100)
@@ -119,9 +123,18 @@ function showInitialBoard() {
 
 watch([chessN, specialX, specialY], showInitialBoard)
 
+// 页面加载时自动恢复高亮
 onMounted(() => {
-  showInitialBoard()
-  startChessboardCover()
+  if (lastRegionMap.value) {
+    // 恢复上次高亮
+    const size = chessSize.value
+    const board = Array.from({ length: size }, () => Array(size).fill(0))
+    board[specialY.value][specialX.value] = -1
+    updateBoard(board, lastRegionMap.value)
+  } else {
+    showInitialBoard()
+    startChessboardCover()
+  }
 })
 </script>
 
