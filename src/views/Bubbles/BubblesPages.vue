@@ -261,11 +261,11 @@ onUnmounted(() => {
     <div class="right">
       <div class="content">
         <h2>冒泡排序算法</h2>
-        <div class="section">
+        <!-- <div class="section">
           <p>
             冒泡排序是一种简单的排序算法。它重复地遍历要排序的序列，依次比较两个元素，如果他们的顺序错误就把他们交换过来。
           </p>
-        </div>
+        </div> -->
         <div class="section">
           <h3>算法原理</h3>
           <p>
@@ -367,6 +367,7 @@ function bubbleSort(arr) {
   background-color: #fff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   padding: 10px;
+  overflow-y: auto;
 }
 
 .content {
