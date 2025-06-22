@@ -10,18 +10,33 @@ const router = createRouter({
     },
     {
       path: '/',
-      redirect: '/login', // 将根路径重定向到登录页
+      redirect: '/login',
     },
     {
       path: '/layout',
       name: 'layout',
       component: () => import('@/views/layout/LayoutPage.vue'),
-      redirect: '/layout/user',
+      redirect: '/layout/Bubbles',
       children: [
         {
-          path: 'user', // 修正路径为相对路径
-          name: 'user',
-          component: () => import('@/views/user/UserPages.vue'),
+          path: 'Bubbles',
+          name: 'Bubbles',
+          component: () => import('@/views/Bubbles/BubblesPages.vue'),
+        },
+        {
+          path: 'Tree',
+          name: 'Tree',
+          component: () => import('@/views/Tree/TreePages.vue'),
+        },
+        {
+          path: 'TowerofHanoi',
+          name: 'TowerofHanoi',
+          component: () => import('@/views/TowerofHanoi/TowerofHanoi.vue'),
+        },
+        {
+          path: 'Chess',
+          name: 'Chess',
+          component: () => import('@/views/Chess/ChessPages.vue'),
         },
       ],
     },
