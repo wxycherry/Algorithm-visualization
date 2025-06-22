@@ -26,12 +26,12 @@
         </a-menu-item>
       </a-menu>
     </a-layout-sider>
-    <a-layout>
+    <a-layout style="background: #e8f0fb;">
       <a-layout-header style="background: #fff; padding: 0;padding-left: 20px; height: 70px;">
         <menu-unfold-outlined v-if="collapsed" class="trigger" @click="() => (collapsed = !collapsed)" />
         <menu-fold-outlined v-else class="trigger" @click="() => (collapsed = !collapsed)" />
       </a-layout-header>
-      <a-layout-content :style="{ margin: '24px 16px', padding: '24px', background: '#fff', minHeight: '280px' }">
+      <a-layout-content :style="{ margin: '15px 10px', padding: '10px', background: '#e8f0fb', minHeight: '280px', }">
         <router-view />
       </a-layout-content>
     </a-layout>
@@ -57,10 +57,11 @@ const handleMenuSelect = ({ key }: { key: string }) => {
 };
 </script>
 
-<style>
+<style scoped>
 .main {
   height: 100vh;
   overflow-y: hidden;
+  background-color: #f0f4f9;
 }
 
 .logo {
