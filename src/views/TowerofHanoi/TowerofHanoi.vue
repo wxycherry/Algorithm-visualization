@@ -174,7 +174,7 @@ const stepDescription = computed(() => {
   return `移动 ${step.disc}号圆盘 从 ${towerNames[step.from]} 到 ${towerNames[step.to]}`;
 });
 
-const currentStep = computed(() => stepIndex.value + 1);
+const currentStep = computed(() => stepIndex.value );
 
 // 根据圆盘大小计算宽度
 const discSize = (disc) => {

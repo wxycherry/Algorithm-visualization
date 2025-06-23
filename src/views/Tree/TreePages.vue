@@ -88,7 +88,7 @@ function huffman(weights) {
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed ,onMounted} from 'vue';
 
 const inputWeights = ref('5,9,12,13,16,45');
 const isRunning = ref(false);
@@ -149,6 +149,9 @@ function buildHuffmanTree() {
   }
   layout(tree.value, 0, svgWidth / 2, svgWidth / 4, null);
 }
+onMounted(() => {
+  buildHuffmanTree();
+});
 </script>
 
 <style scoped>
