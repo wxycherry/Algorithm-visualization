@@ -4,7 +4,7 @@ import router from '@/router'
 
 // 配置新建一个 axios 实例
 const service: AxiosInstance = axios.create({
-  baseURL: '',
+  baseURL: 'http://9o7237a298.goho.co:52892',
   timeout: 50000,
   headers: { 'Content-Type': 'application/json' },
 })
