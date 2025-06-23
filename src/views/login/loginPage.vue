@@ -83,7 +83,7 @@ const handleLogin = () => {
       <a-progress :stroke-color="{
         from: '#108ee9',
         to: '#87d068',
-      }" :percent="percent" status="active" />
+      }" :percent="percent" status="active" :size="[300, 20]" />
     </div>
 
     <img src="../../assets/pre-login.png" alt="" class="pre-login">
