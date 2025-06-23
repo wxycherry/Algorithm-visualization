@@ -7,6 +7,7 @@
           <span v-if="!collapsed" class="logo-text">算法过程可视化系统</span>
         </transition>
       </div>
+      
       <a-menu v-model:selectedKeys="selectedKeys" theme="light" mode="inline" @select="handleMenuSelect">
         <a-menu-item key="Bubbles" style="height: 60px;">
           <BarChartOutlined />
@@ -31,6 +32,7 @@
         <menu-unfold-outlined v-if="collapsed" class="trigger" @click="() => (collapsed = !collapsed)" />
         <menu-fold-outlined v-else class="trigger" @click="() => (collapsed = !collapsed)" />
       </a-layout-header>
+      <div class="Logout" @click="Logout">退出登录</div>
       <a-layout-content :style="{ margin: '15px 10px', padding: '10px', background: '#e8f0fb', minHeight: '280px', }">
         <router-view />
       </a-layout-content>
@@ -61,7 +63,11 @@ const syncMenuHighlight = () => {
     selectedKeys.value = [match[1]];
   }
 };
-
+const Logout = () => {
+  // 这里可以添加退出登录的逻辑
+router.push('/login');
+  console.log('退出登录');
+};
 onMounted(syncMenuHighlight);
 watch(() => route.path, syncMenuHighlight);
 
@@ -132,5 +138,13 @@ const handleMenuSelect = ({ key }: { key: string }) => {
   height: 32px;
   background: rgba(255, 255, 255, 0.3);
   margin: 16px;
+}
+.Logout {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  color: #1890ff;
+  cursor: pointer;
+  font-size: 16px;
 }
 </style>
