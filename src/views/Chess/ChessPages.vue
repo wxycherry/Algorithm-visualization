@@ -256,6 +256,8 @@ function chessboardCover(board, size, sRow, sCol, spRow, spCol) {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   padding: 10px;
   overflow-y: auto;
+  scrollbar-width: none; 
+  -ms-overflow-style: none; 
 }
 
 .content {
