@@ -28,11 +28,15 @@
       </a-menu>
     </a-layout-sider>
     <a-layout style="background: #e8f0fb;">
-      <a-layout-header style="background: #fff; padding: 0;padding-left: 20px; height: 70px;">
-        <menu-unfold-outlined v-if="collapsed" class="trigger" @click="() => (collapsed = !collapsed)" />
-        <menu-fold-outlined v-else class="trigger" @click="() => (collapsed = !collapsed)" />
-      </a-layout-header>
-      <div class="Logout" @click="Logout">退出登录</div>
+  <a-layout-header style="background: #fff; padding: 0;padding-left: 20px; height: 70px;">
+  <menu-unfold-outlined v-if="collapsed" class="trigger" @click="() => (collapsed = !collapsed)" />
+  <menu-fold-outlined v-else class="trigger" @click="() => (collapsed = !collapsed)" />
+  <div class="header-actions">
+    <div class="HistoryBtn" @click="$router.push('/history')">历史记录</div>
+    <div class="Logout" @click="Logout">退出登录</div>
+  </div>
+</a-layout-header>
+
       <a-layout-content :style="{ margin: '15px 10px', padding: '10px', background: '#e8f0fb', minHeight: '280px', }">
         <router-view />
       </a-layout-content>
@@ -142,9 +146,42 @@ const handleMenuSelect = ({ key }: { key: string }) => {
 .Logout {
   position: absolute;
   right: 20px;
-  top: 20px;
+  top: 0px;
   color: #1890ff;
   cursor: pointer;
   font-size: 16px;
+}
+
+.HistoryBtn {
+  color: #1890ff;
+  cursor: pointer;
+  font-size: 16px;
+    position: absolute;
+  right: 160px;
+  top: 0px;
+  display: flex;
+
+  cursor: pointer;
+}
+
+
+.HistoryBtn, .Logout {
+  color: #1890ff;
+  background: #f0f7ff;
+  border-radius: 20px;
+  padding: 0px 12px;
+
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  border: 1px solid #e6f0fa;
+  margin-left: 0;
+  font-weight: 500;
+  box-shadow: 0 1px 4px rgba(24,144,255,0.04);
+}
+
+.HistoryBtn:hover, .Logout:hover {
+  background: #1890ff;
+  color: #fff;
+  border-color: #1890ff;
 }
 </style>

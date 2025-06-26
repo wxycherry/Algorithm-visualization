@@ -13,6 +13,11 @@ const router = createRouter({
       redirect: '/login',
     },
     {
+  path: '/history',
+  name: 'History',
+  component: () => import('@/views/history/history.vue')
+},
+    {
       path: '/layout',
       name: 'layout',
       component: () => import('@/views/layout/LayoutPage.vue'),

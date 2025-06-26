@@ -34,12 +34,19 @@ setTimeout(() => {
   clearInterval(interval);
   preshow.value = false;
 }, 2000);
+import { useUserStore } from '@/store/index'
+const userStore = useUserStore()
+// 登录成功后
 
 const handleLogin = () => {
   if (islogin.value) {
     // 登录逻辑
     loginAPI({ email: email.value!, name: name.value!, password: password.value! }).then(response => {
       console.log('登录响应:', response)
+        const token = response.data.data.token // 从后端返回的数据中提取 token
+        console.log('Token:', token)
+sessionStorage.setItem('token', token)
+userStore.setToken(token)
       if (response.data.code === 200) {
         message.success('登录成功');
         email.value = '';

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { message } from 'ant-design-vue'
 // 棋盘覆盖相关
 const chessN = ref(2)
 const chessSize = computed(() => Math.pow(2, chessN.value))
@@ -16,7 +17,25 @@ const regionColors = [
 ]
 // 新增：保存最后一次高亮的regionMap
 const lastRegionMap = ref<number[][] | undefined>(undefined)
+const userStore = useUserStore()
+const token = userStore.token 
 
+import { useUserStore } from '@/store/index'
+import { getHistoryAPI, addHistoryAPI } from '@/api/history/history'
+
+
+
+const type = 4
+
+const handleAddHistory = async (details: string) => {
+  try {
+    const res = await addHistoryAPI(details, type, token)
+   
+  } catch (e) {
+ console.log('新增历史记录失败:', e)
+    message.error('新增历史记录失败')
+  }
+}
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
@@ -104,6 +123,8 @@ async function chessboardCover(board: number[][], size: number, top: number, lef
 }
 
 async function startChessboardCover() {
+ const details = `棋盘大小: ${chessSize.value}，特殊点: (${specialX.value}, ${specialY.value})`
+  await handleAddHistory(details)
   tileNo = 1
   const size = chessSize.value
   // 初始化棋盘，0为未覆盖，-1为特殊点

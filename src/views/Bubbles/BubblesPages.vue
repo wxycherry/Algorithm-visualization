@@ -1,9 +1,46 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted ,watch} from 'vue'
 import { h } from 'vue'
 import { CaretRightOutlined, UndoOutlined } from '@ant-design/icons-vue'
 import * as echarts from 'echarts'
+import { message } from 'ant-design-vue'
+import axios from 'axios'
 
+const showHistory = ref(false)
+const historyList = ref<string[]>([])
+import { useUserStore } from '@/store/index'
+import { getHistoryAPI, addHistoryAPI } from '@/api/history/history'
+
+
+
+// type 你可以根据页面实际情况传递，比如冒泡排序传 1
+const type = 1
+
+const handleAddHistory = async (details: string) => {
+  try {
+    const res = await addHistoryAPI(details, type, token)
+   
+  } catch (e) {
+ console.log('新增历史记录失败:', e)
+    message.error('新增历史记录失败')
+  }
+}
+const userStore = useUserStore()
+const token = userStore.token 
+// 打开弹窗时获取历史记录
+watch(showHistory, async (val) => {
+  if (val) {
+    try {
+      const res = await getHistoryAPI(token)
+      console.log('token1111',token)
+      console.log('获取历史记录:', res.data)
+      historyList.value = res.data.data
+    } catch (e) {
+      message.error('获取历史记录失败')
+      historyList.value = []
+    }
+  }
+})
 const reset = () => {
   inputNumbers.value = '64, 34, 25, 12, 22, 11, 90'
   // 重置后自动开始新的排序演示
@@ -215,6 +252,7 @@ const startSort = () => {
 
 // 处理输入框回车事件
 const handleInputEnter = () => {
+    handleAddHistory(inputNumbers.value)
   startSort()
 }
 
@@ -250,6 +288,20 @@ onUnmounted(() => {
           @click="handleInputEnter">开始演示</a-button>
         <a-button :icon="h(UndoOutlined)" style="height: 40px" @click="reset">重置</a-button>
       </div>
+      <!-- 在 .top 区域按钮组后面添加 -->
+<a-button style="height: 40px; margin-left: 10px" @click="showHistory = true">历史记录</a-button>
+<a-modal v-model:open="showHistory" title="历史记录" width="400px" :footer="null">
+  <a-list :data-source="historyList" bordered>
+    <template #renderItem="{ item }">
+      <a-list-item>
+        <div>
+          <div><strong>内容：</strong>{{ item.details }}</div>
+          <div style="font-size:12px;color:#888;"><strong>时间：</strong>{{ item.createTime }}</div>
+        </div>
+      </a-list-item>
+    </template>
+  </a-list>
+</a-modal>
       <div class="progress-info" v-if="isSorting || progressText || isInitializing">
         <a-alert :message="isInitializing ? '正在初始化排序演示...' : progressText" :type="isInitializing ? 'warning' : 'info'"
           show-icon :closable="false" style="margin-bottom: 10px;" />
