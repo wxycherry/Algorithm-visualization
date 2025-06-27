@@ -4,18 +4,20 @@ import { h } from 'vue'
 import { CaretRightOutlined, UndoOutlined } from '@ant-design/icons-vue'
 import * as echarts from 'echarts'
 import { message } from 'ant-design-vue'
-import axios from 'axios'
-
-const showHistory = ref(false)
-const historyList = ref<string[]>([])
 import { useUserStore } from '@/store/index'
 import { getHistoryAPI, addHistoryAPI } from '@/api/history/history'
-
-
-
-// type 你可以根据页面实际情况传递，比如冒泡排序传 1
+const showHistory = ref(false)
+const inputNumbers = ref('64, 34, 25, 12, 22, 11, 90')
+const chartContainer = ref<HTMLElement | null>(null)
+let chart: echarts.ECharts | null = null
+let sortingSteps: Array<{ data: number[]; comparison?: { i: number; j: number } }> = []
+let currentStep = 0
+let sortingInterval: ReturnType<typeof setInterval> | null = null
+const isSorting = ref(false)
+const progressText = ref('')
+const isInitializing = ref(true)
+const historyList = ref<string[]>([])
 const type = 1
-
 const handleAddHistory = async (details: string) => {
   try {
     const res = await addHistoryAPI(details, type, token)
@@ -43,22 +45,10 @@ watch(showHistory, async (val) => {
 })
 const reset = () => {
   inputNumbers.value = '64, 34, 25, 12, 22, 11, 90'
-  // 重置后自动开始新的排序演示
   setTimeout(() => {
     startSort()
   }, 100)
 }
-
-const inputNumbers = ref('64, 34, 25, 12, 22, 11, 90')
-const chartContainer = ref<HTMLElement | null>(null)
-let chart: echarts.ECharts | null = null
-let sortingSteps: Array<{ data: number[]; comparison?: { i: number; j: number } }> = []
-let currentStep = 0
-let sortingInterval: ReturnType<typeof setInterval> | null = null
-const isSorting = ref(false)
-const progressText = ref('')
-const isInitializing = ref(true)
-
 // 初始化图表
 const initChart = (data: number[]) => {
   if (!chartContainer.value) return
@@ -70,16 +60,13 @@ const initChart = (data: number[]) => {
 // 计算当前已排序的元素数量
 const getSortedCount = () => {
   let sortedCount = 0
-  // 遍历到当前步骤，计算有多少个没有比较状态的步骤
   for (let i = 0; i < currentStep && i < sortingSteps.length; i++) {
     if (!sortingSteps[i].comparison) {
       sortedCount++
     }
   }
-  // 减去初始状态（第一个步骤没有比较状态，但不代表排序完成）
   return Math.max(0, sortedCount - 1)
 }
-
 // 更新图表数据并设置颜色
 const updateChartWithColors = (data: number[], comparison?: { i: number; j: number }) => {
   if (!chart) return
@@ -88,18 +75,14 @@ const updateChartWithColors = (data: number[], comparison?: { i: number; j: numb
 
   const colors = data.map((_, index) => {
     if (comparison) {
-      // 当前正在比较的两个元素
       if (index === comparison.i || index === comparison.j) {
-        return '#ff4757' // 红色 - 正在比较的元素
+        return '#ff4757' 
       }
-      // 已经排序完成的部分（从右往左）
-      // 每完成一轮，最右边的元素就排序完成
       if (index >= data.length - sortedCount && sortedCount > 0) {
-        return '#2ed573' // 绿色 - 已排序
+        return '#2ed573' 
       }
     }
-    // 默认颜色 - 未排序的部分
-    return '#3742fa' // 蓝色 - 未排序
+    return '#3742fa' 
   })
 
   chart.setOption({
@@ -159,13 +142,12 @@ const updateChartWithColors = (data: number[], comparison?: { i: number; j: numb
 // 生成排序步骤
 const generateSortingSteps = (arr: number[]) => {
   const steps: Array<{ data: number[]; comparison?: { i: number; j: number } }> = [
-    { data: arr.slice() } // 初始状态，没有比较
+    { data: arr.slice() } 
   ]
   const len = arr.length
 
   for (let i = 0; i < len - 1; i++) {
     for (let j = 0; j < len - 1 - i; j++) {
-      // 添加比较步骤
       steps.push({
         data: arr.slice(),
         comparison: { i: j, j: j + 1 }
@@ -173,20 +155,16 @@ const generateSortingSteps = (arr: number[]) => {
 
       if (arr[j] > arr[j + 1]) {
         ;[arr[j], arr[j + 1]] = [arr[j + 1], arr[j]]
-        // 添加交换后的步骤
         steps.push({
           data: arr.slice(),
           comparison: { i: j, j: j + 1 }
         })
       }
     }
-    // 每轮结束后，添加一个没有比较状态的步骤，显示已排序的部分
-    // 注意：第一轮结束后，最右边的元素已经排序完成
     steps.push({
       data: arr.slice()
     })
   }
-
   return steps
 }
 
