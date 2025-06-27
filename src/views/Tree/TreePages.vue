@@ -13,7 +13,10 @@
         <div v-else>请输入权值并生成哈夫曼树</div>
       </div>
       <div class="visualization" style="overflow:auto;">
-        <svg v-if="tree" :width="svgWidth" :height="getTreeHeight">
+        <button class="btn btn-start" @click="playBuildAnimation" :disabled="isAnimating || buildSteps.length===0">
+  动画演示构建过程
+</button>
+        <svg v-if="nodesWithPos.length" :width="svgWidth" :height="getTreeHeight">
           <g v-for="(node, idx) in nodesWithPos" :key="idx">
             <!-- Connect parent to child -->
             <line v-if="node.parent" 
@@ -162,37 +165,30 @@ const getTreeHeight = computed(() => {
 
 // 核心函数：构建哈夫曼树并记录步骤
 function huffmanAlgorithm(initialNodes) {
-  const nodes = initialNodes.map(node => ({ ...node, left: null, right: null, id: Math.random().toString(36).substring(2, 9) })); // 为每个节点分配唯一ID
+  const nodes = initialNodes.map(node => ({ ...node, left: null, right: null, id: Math.random().toString(36).substring(2, 9) }));
   const steps = [];
-
-  // 为内部节点生成一个唯一标识
   let internalNodeCount = 0;
 
   while (nodes.length > 1) {
     nodes.sort((a, b) => a.weight - b.weight);
-
     const left = nodes.shift();
     const right = nodes.shift();
-
     const parent = {
       weight: left.weight + right.weight,
       left,
       right,
-      char: null, // 内部节点通常没有字符
-      id: `internal_${internalNodeCount++}` // 内部节点也给个ID方便跟踪
+      char: null,
+      id: `internal_${internalNodeCount++}`
     };
-
-    // 记录步骤
     steps.push({
-      description: `合并节点 ${left.char ? left.char + ':' : ''}${left.weight} (ID: ${left.id}) 和 ${right.char ? right.char + ':' : ''}${right.weight} (ID: ${right.id})，生成新节点权值 ${parent.weight} (ID: ${parent.id})`,
-      remainingNodes: nodes.map(n => ({ char: n.char, weight: n.weight, id: n.id })) // 记录当前剩余节点，仅复制部分信息
+      description: `合并节点 ${left.char ? left.char + ':' : ''}${left.weight} 和 ${right.char ? right.char + ':' : ''}${right.weight}，生成新节点权值 ${parent.weight}`,
+      remainingNodes: nodes.map(n => ({ char: n.char, weight: n.weight, id: n.id })),
+      tree: JSON.parse(JSON.stringify(parent)) // 保存当前树快照
     });
-
     nodes.push(parent);
   }
   return { root: nodes[0], steps };
 }
-
 
 // 计算每个节点的位置用于SVG渲染
 // 计算每个节点的位置用于SVG渲染
@@ -318,8 +314,33 @@ function layoutTreeNodes(treeRoot) {
   }
   svgHeight.value = Math.max(400, (currentMaxDepth + 1) * nodeHeight + padding); // 加上padding作为底部留白
 }
+const currentStepIndex = ref(0)
+const isAnimating = ref(false)
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
+async function playBuildAnimation() {
+  if (isAnimating.value || buildSteps.value.length === 0) return;
+  isAnimating.value = true;
+  for (let i = 0; i < buildSteps.value.length; i++) {
+    currentStepIndex.value = i;
+    // 重新布局当前步骤的树
+    const stepTree = getStepTree(i);
+    layoutTreeNodes(stepTree);
+    await sleep(900); // 每步间隔
+  }
+  isAnimating.value = false;
+}
 
+// 获取当前步骤的树结构
+function getStepTree(stepIdx) {
+  // 你可以在 huffmanAlgorithm 里为每步保存一份树的快照
+  // 这里假设 buildSteps.value[stepIdx].tree 是该步的树
+  // 如果没有保存快照，可以考虑每步都深拷贝一份树结构
+  // 这里只做演示，实际需配合你的 huffmanAlgorithm 返回每步树
+  return buildSteps.value[stepIdx].tree || tree.value;
+}
 // 主函数：构建哈夫曼树并更新界面
 function buildHuffmanTree() {
   isRunning.value = true;
@@ -392,7 +413,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 保持原有的样式 */
 * {
   margin: 0;
   padding: 0;
@@ -407,7 +427,7 @@ body {
 }
 .hanotas {
   width: 100%;
-  height: 90vh; /* 调整高度以适应内容 */
+  height: 90vh; 
   display: flex;
   flex-direction: row;
   justify-content: space-around;
@@ -440,10 +460,10 @@ body {
   flex: 1;
 }
 .disc-input label {
-  white-space: nowrap; /* Prevent label from wrapping */
+  white-space: nowrap; 
 }
 .disc-input input, .speed-control input {
-  flex: 1; /* Allow input to take available space */
+  flex: 1; 
   height: 30px;
   border: none;
   background: transparent;
@@ -491,7 +511,7 @@ body {
   border-radius: 8px;
   font-size: 15px;
   color: #3a5cc8;
-  border-left: 4px solid #4a74fb;
+  border-left: 4px solid #A8E1E8;
 }
 .visualization {
   flex: 1;
@@ -502,7 +522,7 @@ body {
   background: #f8f9fc;
   border: 1px solid #e8ecfa;
   padding: 20px;
-  overflow-y: auto; /* Enable scrolling for large trees */
+  overflow-y: auto; 
 }
 .right {
   width: 34%;
@@ -513,7 +533,7 @@ body {
   padding: 20px;
   overflow-y: auto;
   scrollbar-width: thin; 
-  scrollbar-color: #4a74fb #f0f4ff; 
+  scrollbar-color: #A8E1E8 #f0f4ff; 
 }
 .right::-webkit-scrollbar {
   width: 8px; 
@@ -523,7 +543,7 @@ body {
   border-radius: 4px;
 }
 .right::-webkit-scrollbar-thumb {
-  background-color: #4a74fb; 
+  background-color: #A8E1E8; 
   border-radius: 4px;
   border: 2px solid #f0f4ff; 
 }
@@ -578,11 +598,10 @@ li {
   font-size: 15px;
 }
 
-/* New styles for build process steps */
 .build-step {
   background: #f8f9fc;
   border: 1px solid #e2e8f0;
-  border-left: 4px solid #4CAF50; /* Green highlight for steps */
+  border-left: 4px solid #4CAF50;
   border-radius: 8px;
   padding: 15px;
   margin-bottom: 15px;
@@ -597,6 +616,15 @@ li {
   font-size: 14px;
   line-height: 1.5;
   color: #666;
-  margin-bottom: 5px; /* Adjust spacing for step paragraphs */
+  margin-bottom: 5px; 
+}
+.visualization::-webkit-scrollbar,
+.right::-webkit-scrollbar {
+  width: 0 !important;
+  background: transparent;
+}
+.visualization,
+.right {
+  scrollbar-width: none; 
 }
 </style>

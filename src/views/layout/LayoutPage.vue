@@ -147,13 +147,13 @@ const handleMenuSelect = ({ key }: { key: string }) => {
   position: absolute;
   right: 20px;
   top: 0px;
-  color: #1890ff;
+  color: #A8E1E8;
   cursor: pointer;
   font-size: 16px;
 }
 
 .HistoryBtn {
-  color: #1890ff;
+  color: #A8E1E8;
   cursor: pointer;
   font-size: 16px;
     position: absolute;
@@ -166,7 +166,7 @@ const handleMenuSelect = ({ key }: { key: string }) => {
 
 
 .HistoryBtn, .Logout {
-  color: #1890ff;
+  color: #A8E1E8;
   background: #f0f7ff;
   border-radius: 20px;
   padding: 0px 12px;
@@ -180,8 +180,8 @@ const handleMenuSelect = ({ key }: { key: string }) => {
 }
 
 .HistoryBtn:hover, .Logout:hover {
-  background: #1890ff;
+  background: #A8E1E8;
   color: #fff;
-  border-color: #1890ff;
+  border-color: #A8E1E8;
 }
 </style>

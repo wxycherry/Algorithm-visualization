@@ -289,7 +289,7 @@ onUnmounted(() => {
         <a-button :icon="h(UndoOutlined)" style="height: 40px" @click="reset">重置</a-button>
       </div>
       <!-- 在 .top 区域按钮组后面添加 -->
-<a-button style="height: 40px; margin-left: 10px" @click="showHistory = true">历史记录</a-button>
+<!----<a-button style="height: 40px; margin-left: 10px" @click="showHistory = true">历史记录</a-button>
 <a-modal v-model:open="showHistory" title="历史记录" width="400px" :footer="null">
   <a-list :data-source="historyList" bordered>
     <template #renderItem="{ item }">
@@ -301,7 +301,7 @@ onUnmounted(() => {
       </a-list-item>
     </template>
   </a-list>
-</a-modal>
+</a-modal>-->
       <div class="progress-info" v-if="isSorting || progressText || isInitializing">
         <a-alert :message="isInitializing ? '正在初始化排序演示...' : progressText" :type="isInitializing ? 'warning' : 'info'"
           show-icon :closable="false" style="margin-bottom: 10px;" />

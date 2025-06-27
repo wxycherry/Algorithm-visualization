@@ -196,12 +196,25 @@ const discSize = (disc) => {
   // 最小圆盘宽度 (disc=1) 80px，最大圆盘根据 discCount 算
   return 80 + (disc - 1) * 30; // 调整乘数使宽度差异明显
 };
+// 在 <script setup> 顶部添加
+const discColors = [
+  '#123F68', // Color 100
+  '#105186', // Color 90
+  '#0D5897', // Color 80
+  '#0E6FBB', // Color 70
+  '#1C8DDB', // Color 60
+  '#44A7EC', // Color 50
+  '#85C5F4', // Color 40
+  '#BEDFF9', // Color 30
+  '#E2EFFC', // Color 20
+  '#F1F8FE', // Color 10
+];
 
-// 生成圆盘颜色（根据圆盘大小生成不同色调）
+// 替换原有 discColor 函数
 const discColor = (disc) => {
-  const hue = (disc - 1) * (360 / discCount.value);
-  return `linear-gradient(135deg, hsl(${hue}, 80%, 60%), hsl(${hue + 20}, 80%, 55%))`;
+  return discColors[disc - 1] || discColors[discColors.length - 1];
 };
+
 
 // 异步延迟函数
 function sleep(ms) {
