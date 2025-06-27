@@ -217,7 +217,6 @@ const startSort = () => {
     currentStep++
     if (currentStep >= sortingSteps.length) {
       if (sortingInterval) clearInterval(sortingInterval)
-      // 最终状态，移除所有颜色标记
       updateChartWithColors(sortingSteps[sortingSteps.length - 1].data)
       isSorting.value = false
       progressText.value = '排序完成！'
@@ -247,9 +246,8 @@ const startSort = () => {
         progressText.value = '开始第一轮排序...'
       }
     }
-  }, 1000) // 增加到1秒，更容易观察
+  }, 1000) 
 }
-
 // 处理输入框回车事件
 const handleInputEnter = () => {
     handleAddHistory(inputNumbers.value)
@@ -260,12 +258,10 @@ const handleInputEnter = () => {
 onMounted(() => {
   console.log(inputNumbers.value)
   window.addEventListener('resize', () => chart?.resize())
-
-  // 页面加载后自动开始排序演示
   setTimeout(() => {
     isInitializing.value = false
     startSort()
-  }, 500) // 延迟500ms确保组件完全渲染
+  }, 500) 
 })
 
 // 组件卸载时清理
@@ -288,20 +284,7 @@ onUnmounted(() => {
           @click="handleInputEnter">开始演示</a-button>
         <a-button :icon="h(UndoOutlined)" style="height: 40px" @click="reset">重置</a-button>
       </div>
-      <!-- 在 .top 区域按钮组后面添加 -->
-<!----<a-button style="height: 40px; margin-left: 10px" @click="showHistory = true">历史记录</a-button>
-<a-modal v-model:open="showHistory" title="历史记录" width="400px" :footer="null">
-  <a-list :data-source="historyList" bordered>
-    <template #renderItem="{ item }">
-      <a-list-item>
-        <div>
-          <div><strong>内容：</strong>{{ item.details }}</div>
-          <div style="font-size:12px;color:#888;"><strong>时间：</strong>{{ item.createTime }}</div>
-        </div>
-      </a-list-item>
-    </template>
-  </a-list>
-</a-modal>-->
+  
       <div class="progress-info" v-if="isSorting || progressText || isInitializing">
         <a-alert :message="isInitializing ? '正在初始化排序演示...' : progressText" :type="isInitializing ? 'warning' : 'info'"
           show-icon :closable="false" style="margin-bottom: 10px;" />

@@ -18,7 +18,6 @@
 </button>
         <svg v-if="nodesWithPos.length" :width="svgWidth" :height="getTreeHeight">
           <g v-for="(node, idx) in nodesWithPos" :key="idx">
-            <!-- Connect parent to child -->
             <line v-if="node.parent" 
                   :x1="node.parent.x" :y1="node.parent.y + 20" 
                   :x2="node.x" :y2="node.y - 20" 
@@ -123,43 +122,41 @@ function huffman(initialNodes) {
 
 <script setup >
 import { ref, computed, onMounted } from 'vue';
-import { message } from 'ant-design-vue'; // 假设你安装了 antd-vue 或其他UI库用于消息提示
-// import { useUserStore } from '@/store/index'; // 假设这些是用户相关的 store 和 API
-// import { getHistoryAPI, addHistoryAPI } from '@/api/history/history';
+import { message } from 'ant-design-vue'; 
+import { useUserStore } from '@/store/index'; 
+import { getHistoryAPI, addHistoryAPI } from '@/api/history/history';
 
-const inputWeights = ref('A:5,B:9,C:12,D:13,E:16,F:45'); // 初始值改为字符:权值格式
+const inputWeights = ref('A:5,B:9,C:12,D:13,E:16,F:45'); 
 const isRunning = ref(false);
 const tree = ref(null);
-const nodesWithPos = ref([]); // 用于SVG渲染的带位置信息节点
+const nodesWithPos = ref([]); 
 const svgWidth = 600;
-const svgHeight = ref(400); // 动态调整SVG高度
+const svgHeight = ref(400); 
 const wpl = ref(0);
-const buildSteps = ref([]); // 新增：存储哈夫曼树构建的每一步
+const buildSteps = ref([]); 
+const userStore = useUserStore()
+const token = userStore.token 
+const type = 2; 
 
-// 假设 userStore 和 token 相关的代码
-// const userStore = useUserStore();
-// const token = userStore.token;
-// const type = 2; // History type
-
-// const handleAddHistory = async (details) => {
-//   try {
-//     const res = await addHistoryAPI(details, type, token);
-//     console.log('新增历史记录成功:', res);
-//   } catch (e) {
-//     console.error('新增历史记录失败:', e);
-//     message.error('新增历史记录失败');
-//   }
-// };
+const handleAddHistory = async (details) => {
+  try {
+    const res = await addHistoryAPI(details, type, token);
+    console.log('新增历史记录成功:', res);
+  } catch (e) {
+    console.error('新增历史记录失败:', e);
+    message.error('新增历史记录失败');
+  }
+};
 
 // 计算SVG高度
 const getTreeHeight = computed(() => {
   if (nodesWithPos.value.length === 0) return 400;
   let maxDepth = 0;
   for (const node of nodesWithPos.value) {
-    const depth = Math.floor((node.y - 60) / 60); // 转换为深度
+    const depth = Math.floor((node.y - 60) / 60); 
     maxDepth = Math.max(maxDepth, depth);
   }
-  return Math.max(400, (maxDepth + 1) * 70); // 节点高度20*2 + 间距 + 下方字符20 = ~60-70px per depth
+  return Math.max(400, (maxDepth + 1) * 70); 
 });
 
 
@@ -183,39 +180,25 @@ function huffmanAlgorithm(initialNodes) {
     steps.push({
       description: `合并节点 ${left.char ? left.char + ':' : ''}${left.weight} 和 ${right.char ? right.char + ':' : ''}${right.weight}，生成新节点权值 ${parent.weight}`,
       remainingNodes: nodes.map(n => ({ char: n.char, weight: n.weight, id: n.id })),
-      tree: JSON.parse(JSON.stringify(parent)) // 保存当前树快照
+      tree: JSON.parse(JSON.stringify(parent))
     });
     nodes.push(parent);
   }
   return { root: nodes[0], steps };
 }
-
-// 计算每个节点的位置用于SVG渲染
 // 计算每个节点的位置用于SVG渲染
 function layoutTreeNodes(treeRoot) {
   nodesWithPos.value = [];
-  
   if (!treeRoot) return;
-
-  // 使用一个Map来存储每个节点的唯一ID到其对应的SVG渲染对象的映射
   const nodeMap = new Map();
-
-  // 定义层级和水平间距参数
-  const nodeHeight = 60; // 每层节点垂直间距
+  const nodeHeight = 60; 
   let maxDepth = 0;
-
-  // 使用一个数组来存储所有节点，方便后续扁平化处理
   const allNodes = [];
-  let currentXSerial = 0; // 用于给叶子节点分配一个唯一的X序列号
-
-  // 第一遍DFS：计算每个节点的深度和_initialX
-  // 注意：这里需要确保所有节点都被访问到，并填充_initialX
+  let currentXSerial = 0; 
   function dfsAssignInitialX(node, depth) {
     if (!node) return;
 
     maxDepth = Math.max(maxDepth, depth);
-
-    // 递归访问左右子节点
     if (node.left) {
       dfsAssignInitialX(node.left, depth + 1);
     }
@@ -223,49 +206,36 @@ function layoutTreeNodes(treeRoot) {
       dfsAssignInitialX(node.right, depth + 1);
     }
 
-    // 后序遍历：在子节点处理完后，再处理当前节点
-    if (!node.left && !node.right) { // 叶子节点
+    if (!node.left && !node.right) { 
       node._initialX = currentXSerial++;
     } else {
-      // 内部节点的X坐标是其左右子节点X坐标的平均值
-      // 确保子节点存在且_initialX已计算
-      let leftX = node.left ? node.left._initialX : currentXSerial; // 实际场景中如果左子节点不存在，可能是树结构问题
-      let rightX = node.right ? node.right._initialX : currentXSerial; // 同上
-
-      // 考虑只有一个子节点的情况：
-      if (node.left && !node.right) { // 只有左子节点
+      let leftX = node.left ? node.left._initialX : currentXSerial;
+      let rightX = node.right ? node.right._initialX : currentXSerial; 
+      if (node.left && !node.right) { 
           node._initialX = node.left._initialX;
-      } else if (!node.left && node.right) { // 只有右子节点
+      } else if (!node.left && node.right) { 
           node._initialX = node.right._initialX;
-      } else { // 左右子节点都存在
+      } else { 
           node._initialX = (node.left._initialX + node.right._initialX) / 2;
       }
     }
-    allNodes.push(node); // 将处理后的节点添加到扁平数组
+    allNodes.push(node); 
   }
-
-  // 从根节点开始第一次DFS，计算所有节点的_initialX
   dfsAssignInitialX(treeRoot, 0);
 
-  // 检查是否所有节点都有 _initialX，以及 allNodes 是否为空
   if (allNodes.length === 0) {
       console.warn("No nodes processed for layout.");
       return;
   }
 
-  // 找到最小和最大的 _initialX
-  // 必须确保 allNodes 中的每个元素都有 _initialX 且是数字
   const validInitialXs = allNodes.filter(n => typeof n._initialX === 'number' && !isNaN(n._initialX));
 
   if (validInitialXs.length === 0) {
-      // 如果没有有效的 _initialX，说明所有节点都是无效的，或者只有根节点且没有子节点
-      // 这可能发生在只有一个节点或者输入数据导致树结构异常的情况下
-      // 为这种情况设置一个默认行为，例如将唯一的节点放置在中心
       if (treeRoot && typeof treeRoot._initialX === 'number' && !isNaN(treeRoot._initialX)) {
-          validInitialXs.push(treeRoot); // 如果只有一个有效根节点，作为唯一有效X
+          validInitialXs.push(treeRoot); 
       } else {
           console.warn("No valid _initialX found for any node. Cannot layout tree.");
-          return; // 无法布局，直接返回
+          return; 
       }
   }
 
@@ -273,46 +243,34 @@ function layoutTreeNodes(treeRoot) {
   const maxInitialX = Math.max(...validInitialXs.map(n => n._initialX));
 
   const xRange = maxInitialX - minInitialX;
-  const normalizedXRange = xRange === 0 ? 1 : xRange; // 避免除以零
+  const normalizedXRange = xRange === 0 ? 1 : xRange;
 
-  const padding = 50; // 边缘留白
+  const padding = 50;
   const effectiveWidth = svgWidth - 2 * padding;
-
-  // 第二遍DFS：生成用于SVG渲染的节点数据 (nodesWithPos)
-  // 这一次是为了收集所有必要的信息，并在填充 x 坐标时使用全局的 minInitialX 和 maxInitialX
+  // 收集所有必要的信息
   function dfsPopulateSvgNodes(node, depth, parentSvgNode = null) {
       if (!node) return;
-
       const svgNode = {
           id: node.id,
           weight: node.weight,
           char: node.char,
-          // 根据之前计算的_initialX映射到SVG宽度
           x: padding + (node._initialX - minInitialX) / normalizedXRange * effectiveWidth,
           y: 60 + depth * nodeHeight,
-          parent: parentSvgNode // 指向父节点的SVG渲染对象，以便连线
+          parent: parentSvgNode 
       };
-
-      nodeMap.set(node.id, svgNode); // 存储映射，方便子节点查找父节点
-
+      nodeMap.set(node.id, svgNode); 
       nodesWithPos.value.push(svgNode);
-
-      // 递归处理子节点
       dfsPopulateSvgNodes(node.left, depth + 1, svgNode);
       dfsPopulateSvgNodes(node.right, depth + 1, svgNode);
   }
 
   // 从根节点开始第二次DFS，填充 nodesWithPos
   dfsPopulateSvgNodes(treeRoot, 0);
-
-  // 根据最大深度调整SVG高度
-  // 重新计算maxDepth，因为dfsAssignInitialX中maxDepth是基于原始节点数组更新的
-  // 确保所有节点都已在nodesWithPos中，才能正确计算其在SVG上的y坐标
   let currentMaxDepth = 0;
   if(nodesWithPos.value.length > 0) {
       currentMaxDepth = Math.max(...nodesWithPos.value.map(n => Math.floor((n.y - 60) / nodeHeight)));
   }
-  svgHeight.value = Math.max(400, (currentMaxDepth + 1) * nodeHeight + padding); // 加上padding作为底部留白
+  svgHeight.value = Math.max(400, (currentMaxDepth + 1) * nodeHeight + padding); 
 }
 const currentStepIndex = ref(0)
 const isAnimating = ref(false)
@@ -325,20 +283,15 @@ async function playBuildAnimation() {
   isAnimating.value = true;
   for (let i = 0; i < buildSteps.value.length; i++) {
     currentStepIndex.value = i;
-    // 重新布局当前步骤的树
     const stepTree = getStepTree(i);
     layoutTreeNodes(stepTree);
-    await sleep(900); // 每步间隔
+    await sleep(900);
   }
   isAnimating.value = false;
 }
 
 // 获取当前步骤的树结构
 function getStepTree(stepIdx) {
-  // 你可以在 huffmanAlgorithm 里为每步保存一份树的快照
-  // 这里假设 buildSteps.value[stepIdx].tree 是该步的树
-  // 如果没有保存快照，可以考虑每步都深拷贝一份树结构
-  // 这里只做演示，实际需配合你的 huffmanAlgorithm 返回每步树
   return buildSteps.value[stepIdx].tree || tree.value;
 }
 // 主函数：构建哈夫曼树并更新界面
@@ -347,8 +300,7 @@ function buildHuffmanTree() {
   tree.value = null;
   nodesWithPos.value = [];
   wpl.value = 0;
-  buildSteps.value = []; // 重置构建步骤
-
+  buildSteps.value = []; 
   const parsedWeights = [];
   const parts = inputWeights.value.split(',');
   for (const part of parts) {
@@ -381,13 +333,13 @@ function buildHuffmanTree() {
 
   const { root, steps } = huffmanAlgorithm(parsedWeights);
   tree.value = root;
-  buildSteps.value = steps; // 更新构建步骤
+  buildSteps.value = steps; 
 
   // 计算带权路径长度 (WPL)
   let calculatedWPL = 0;
   function calculateWPL(node, depth) {
     if (!node) return;
-    if (!node.left && !node.right) { // 叶子节点
+    if (!node.left && !node.right) { 
       calculatedWPL += node.weight * depth;
       return;
     }
@@ -397,11 +349,10 @@ function buildHuffmanTree() {
   calculateWPL(tree.value, 0);
   wpl.value = calculatedWPL;
 
-  // 布局树节点用于SVG渲染
   layoutTreeNodes(tree.value);
 
-  // const details = `权值: ${inputWeights.value}, WPL: ${wpl.value}`;
-  // handleAddHistory(details); // 记录历史操作
+  const details = `权值: ${inputWeights.value}, WPL: ${wpl.value}`;
+  handleAddHistory(details); 
 
   isRunning.value = false;
 }

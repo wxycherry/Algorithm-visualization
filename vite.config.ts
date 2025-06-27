@@ -26,11 +26,11 @@ export default defineConfig({
   server: {
    proxy: {
   '/system': {
-    target: 'http://9o7237a298.goho.co',
+    target: 'http://9o7237a298.goho.co:53764',
     changeOrigin: true,
     headers: {
-      Host: '9o7237a298.goho.co',
-      Origin: 'http://9o7237a298.goho.co'
+      Host: '9o7237a298.goho.co:53764',
+      Origin: 'http://9o7237a298.goho.co:53764'
     },
   },
 },

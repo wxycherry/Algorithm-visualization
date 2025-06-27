@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { message } from 'ant-design-vue'
+import { useUserStore } from '@/store/index'
+import { addHistoryAPI } from '@/api/history/history'
 // 棋盘覆盖相关
 const chessN = ref(2)
 const chessSize = computed(() => Math.pow(2, chessN.value))
@@ -8,25 +10,17 @@ const specialX = ref(0)
 const specialY = ref(0)
 const chessboardArray = ref<{ color: string, tile?: number, region?: number }[][]>([])
 let tileNo = 1
-// const colors = [ ... ] // 已不再使用
 const regionColors = [
-  'rgba(112,161,255,0.18)', // 区域1
-  'rgba(123,237,159,0.18)', // 区域2
-  'rgba(246,229,141,0.18)', // 区域3
-  'rgba(255,190,118,0.18)'  // 区域4
+  'rgba(112,161,255,0.18)',
+  'rgba(123,237,159,0.18)', 
+  'rgba(246,229,141,0.18)',
+  'rgba(255,190,118,0.18)'  
 ]
 // 新增：保存最后一次高亮的regionMap
 const lastRegionMap = ref<number[][] | undefined>(undefined)
 const userStore = useUserStore()
 const token = userStore.token 
-
-import { useUserStore } from '@/store/index'
-import { getHistoryAPI, addHistoryAPI } from '@/api/history/history'
-
-
-
 const type = 4
-
 const handleAddHistory = async (details: string) => {
   try {
     const res = await addHistoryAPI(details, type, token)
@@ -42,8 +36,8 @@ function sleep(ms: number) {
 
 function getColor(tile: number) {
   if (tile === 0) return '#fff'
-  if (tile === -1) return '#ff4757' // 特殊点
-  return '#70a1ff' // 统一淡蓝色
+  if (tile === -1) return '#ff4757' 
+  return '#70a1ff' 
 }
 
 function updateBoard(board: number[][], regionMap?: number[][]) {
@@ -60,10 +54,10 @@ async function chessboardCover(board: number[][], size: number, top: number, lef
   const s = size >> 1
   // 四个子棋盘的特殊点坐标
   const pos = [
-    [top + s - 1, left + s - 1],     // 左上
-    [top + s - 1, left + s],         // 右上
-    [top + s, left + s - 1],         // 左下
-    [top + s, left + s]              // 右下
+    [top + s - 1, left + s - 1],     
+    [top + s - 1, left + s],         
+    [top + s, left + s - 1],         
+    [top + s, left + s]              
   ]
   // 找到特殊点在哪个象限
   let quad = 0
@@ -93,7 +87,7 @@ async function chessboardCover(board: number[][], size: number, top: number, lef
   // 保存最后一次高亮
   lastRegionMap.value = regionMap.map(row => [...row])
   await sleep(400)
-  updateBoard(board) // 恢复正常
+  updateBoard(board) 
   await sleep(100)
   // 递归4个子棋盘
   await chessboardCover(
