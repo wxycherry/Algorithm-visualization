@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { message } from 'ant-design-vue'
+import { useUserStore } from '@/store/index'
+import { addHistoryAPI } from '@/api/history/history'
 // 棋盘覆盖相关
 const chessN = ref(2)
 const chessSize = computed(() => Math.pow(2, chessN.value))
@@ -8,31 +10,24 @@ const specialX = ref(0)
 const specialY = ref(0)
 const chessboardArray = ref<{ color: string, tile?: number, region?: number }[][]>([])
 let tileNo = 1
-// const colors = [ ... ] // 已不再使用
+const isPaused = ref(false)
 const regionColors = [
-  'rgba(112,161,255,0.18)', // 区域1
-  'rgba(123,237,159,0.18)', // 区域2
-  'rgba(246,229,141,0.18)', // 区域3
-  'rgba(255,190,118,0.18)'  // 区域4
+  'rgba(112,161,255,0.18)',
+  'rgba(123,237,159,0.18)',
+  'rgba(246,229,141,0.18)',
+  'rgba(255,190,118,0.18)'
 ]
 // 新增：保存最后一次高亮的regionMap
 const lastRegionMap = ref<number[][] | undefined>(undefined)
 const userStore = useUserStore()
-const token = userStore.token 
-
-import { useUserStore } from '@/store/index'
-import { getHistoryAPI, addHistoryAPI } from '@/api/history/history'
-
-
-
+const token = userStore.token
 const type = 4
-
 const handleAddHistory = async (details: string) => {
   try {
     const res = await addHistoryAPI(details, type, token)
-   
+
   } catch (e) {
- console.log('新增历史记录失败:', e)
+    console.log('新增历史记录失败:', e)
     message.error('新增历史记录失败')
   }
 }
@@ -40,10 +35,21 @@ function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+// 添加暂停检查函数
+async function checkPause() {
+  while (isPaused.value) {
+    await sleep(100)
+  }
+}
+
+function togglePause() {
+  isPaused.value = !isPaused.value
+}
+
 function getColor(tile: number) {
   if (tile === 0) return '#fff'
-  if (tile === -1) return '#ff4757' // 特殊点
-  return '#70a1ff' // 统一淡蓝色
+  if (tile === -1) return '#ff4757'
+  return '#70a1ff'
 }
 
 function updateBoard(board: number[][], regionMap?: number[][]) {
@@ -60,10 +66,10 @@ async function chessboardCover(board: number[][], size: number, top: number, lef
   const s = size >> 1
   // 四个子棋盘的特殊点坐标
   const pos = [
-    [top + s - 1, left + s - 1],     // 左上
-    [top + s - 1, left + s],         // 右上
-    [top + s, left + s - 1],         // 左下
-    [top + s, left + s]              // 右下
+    [top + s - 1, left + s - 1],
+    [top + s - 1, left + s],
+    [top + s, left + s - 1],
+    [top + s, left + s]
   ]
   // 找到特殊点在哪个象限
   let quad = 0
@@ -78,6 +84,9 @@ async function chessboardCover(board: number[][], size: number, top: number, lef
       board[y][x] = t
     }
   }
+
+  console.log(`放置L形骨牌 ${t}，位置:`, pos.filter((_, i) => i !== quad))
+
   // 构造regionMap用于高亮四个子棋盘
   const regionMap = Array.from({ length: board.length }, () => Array(board.length).fill(undefined))
   for (let i = 0; i < 4; i++) {
@@ -92,9 +101,12 @@ async function chessboardCover(board: number[][], size: number, top: number, lef
   updateBoard(board, regionMap)
   // 保存最后一次高亮
   lastRegionMap.value = regionMap.map(row => [...row])
-  await sleep(400)
-  updateBoard(board) // 恢复正常
-  await sleep(100)
+  await sleep(800)
+  await checkPause()
+  // 保持L形骨牌显示，但移除区域高亮
+  updateBoard(board, undefined)
+  await sleep(200)
+  await checkPause()
   // 递归4个子棋盘
   await chessboardCover(
     board, s, top, left,
@@ -123,7 +135,7 @@ async function chessboardCover(board: number[][], size: number, top: number, lef
 }
 
 async function startChessboardCover() {
- const details = `棋盘大小: ${chessSize.value}，特殊点: (${specialX.value}, ${specialY.value})`
+  const details = `棋盘大小: ${chessSize.value}，特殊点: (${specialX.value}, ${specialY.value})`
   await handleAddHistory(details)
   tileNo = 1
   const size = chessSize.value
@@ -175,14 +187,19 @@ onMounted(() => {
             <a-input-number v-model:value="specialY" :min="0" :max="chessSize - 1" />
           </a-form-item>
           <a-button type="primary" @click="startChessboardCover">开始演示</a-button>
+          <a-button :type="isPaused ? 'primary' : 'default'" @click="togglePause" style="margin-left: 8px;">
+            {{ isPaused ? '继续' : '暂停' }}
+          </a-button>
         </a-form>
       </div>
       <!-- 棋盘覆盖可视化区域 -->
       <div class="chessboard-visual">
         <div v-if="chessboardArray.length" class="chessboard-grid"
           :style="{ gridTemplateColumns: `repeat(${chessSize}, 40px)` }">
-          <div v-for="(cell, idx) in chessboardArray.flat()" :key="idx" class="chess-cell"
-            :style="{ background: cell.region !== undefined ? regionColors[cell.region] : cell.color, borderColor: cell.region !== undefined ? regionColors[cell.region].replace('0.18', '0.7') : '#ccc' }">
+          <div v-for="(cell, idx) in chessboardArray.flat()" :key="idx" class="chess-cell" :style="{
+            background: cell.tile === -1 ? '#ff4757' : (cell.tile && cell.tile > 0 ? '#70a1ff' : (cell.region !== undefined ? regionColors[cell.region] : cell.color)),
+            borderColor: cell.region !== undefined ? regionColors[cell.region].replace('0.18', '0.7') : '#ccc'
+          }">
           </div>
         </div>
       </div>
@@ -277,8 +294,8 @@ function chessboardCover(board, size, sRow, sCol, spRow, spCol) {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   padding: 10px;
   overflow-y: auto;
-  scrollbar-width: none; 
-  -ms-overflow-style: none; 
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .content {

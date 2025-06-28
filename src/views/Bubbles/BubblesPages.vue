@@ -50,7 +50,6 @@ const updateChartWithColors = (data: number[], comparison?: { i: number; j: numb
 
   const colors = data.map((_, index) => {
     if (comparison) {
-      // 当前正在比较的两个元素
       if (index === comparison.i || index === comparison.j) {
         return '#ff4757' // 红色 - 正在比较的元素
       }
@@ -144,7 +143,6 @@ const generateSortingSteps = (arr: number[]) => {
 
   for (let i = 0; i < len - 1; i++) {
     for (let j = 0; j < len - 1 - i; j++) {
-      // 添加比较步骤
       steps.push({
         data: arr.slice(),
         comparison: { i: j, j: j + 1 }
@@ -152,7 +150,6 @@ const generateSortingSteps = (arr: number[]) => {
 
       if (arr[j] > arr[j + 1]) {
         ;[arr[j], arr[j + 1]] = [arr[j + 1], arr[j]]
-        // 添加交换后的步骤
         steps.push({
           data: arr.slice(),
           comparison: { i: j, j: j + 1 }
@@ -164,7 +161,6 @@ const generateSortingSteps = (arr: number[]) => {
       data: arr.slice()
     })
   }
-
   return steps
 }
 
@@ -195,7 +191,6 @@ const startSort = () => {
     currentStep++
     if (currentStep >= sortingSteps.length) {
       if (sortingInterval) clearInterval(sortingInterval)
-      // 最终状态，移除所有颜色标记
       updateChartWithColors(sortingSteps[sortingSteps.length - 1].data)
       isSorting.value = false
       progressText.value = '排序完成！'
@@ -224,6 +219,11 @@ const startSort = () => {
 onMounted(() => {
   console.log(inputNumbers.value)
   window.addEventListener('resize', () => chart?.resize())
+
+  // 页面加载时自动开始演示
+  setTimeout(() => {
+    startSort()
+  }, 500) // 延迟500ms确保页面完全加载
 })
 
 // 组件卸载时清理
