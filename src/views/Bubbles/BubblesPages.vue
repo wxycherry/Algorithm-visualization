@@ -1,52 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted ,watch} from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { h } from 'vue'
 import { CaretRightOutlined, UndoOutlined } from '@ant-design/icons-vue'
 import * as echarts from 'echarts'
-import { message } from 'ant-design-vue'
-import axios from 'axios'
 
-const showHistory = ref(false)
-const historyList = ref<string[]>([])
-import { useUserStore } from '@/store/index'
-import { getHistoryAPI, addHistoryAPI } from '@/api/history/history'
-
-
-
-// type 你可以根据页面实际情况传递，比如冒泡排序传 1
-const type = 1
-
-const handleAddHistory = async (details: string) => {
-  try {
-    const res = await addHistoryAPI(details, type, token)
-   
-  } catch (e) {
- console.log('新增历史记录失败:', e)
-    message.error('新增历史记录失败')
-  }
-}
-const userStore = useUserStore()
-const token = userStore.token 
-// 打开弹窗时获取历史记录
-watch(showHistory, async (val) => {
-  if (val) {
-    try {
-      const res = await getHistoryAPI(token)
-      console.log('token1111',token)
-      console.log('获取历史记录:', res.data)
-      historyList.value = res.data.data
-    } catch (e) {
-      message.error('获取历史记录失败')
-      historyList.value = []
-    }
-  }
-})
 const reset = () => {
-  inputNumbers.value = '64, 34, 25, 12, 22, 11, 90'
-  // 重置后自动开始新的排序演示
-  setTimeout(() => {
-    startSort()
-  }, 100)
+  inputNumbers.value = ''
 }
 
 const inputNumbers = ref('64, 34, 25, 12, 22, 11, 90')
@@ -57,7 +16,6 @@ let currentStep = 0
 let sortingInterval: ReturnType<typeof setInterval> | null = null
 const isSorting = ref(false)
 const progressText = ref('')
-const isInitializing = ref(true)
 
 // 初始化图表
 const initChart = (data: number[]) => {
@@ -67,24 +25,28 @@ const initChart = (data: number[]) => {
   updateChartWithColors(data)
 }
 
-// 计算当前已排序的元素数量
-const getSortedCount = () => {
-  let sortedCount = 0
-  // 遍历到当前步骤，计算有多少个没有比较状态的步骤
-  for (let i = 0; i < currentStep && i < sortingSteps.length; i++) {
-    if (!sortingSteps[i].comparison) {
-      sortedCount++
-    }
-  }
-  // 减去初始状态（第一个步骤没有比较状态，但不代表排序完成）
-  return Math.max(0, sortedCount - 1)
-}
-
 // 更新图表数据并设置颜色
 const updateChartWithColors = (data: number[], comparison?: { i: number; j: number }) => {
   if (!chart) return
 
-  const sortedCount = getSortedCount()
+  // 计算当前轮次
+  let currentRound = 0
+  if (!comparison && currentStep > 0) {
+    // 简化计算：直接通过步骤数计算轮次
+    // 每轮的基本步骤数：比较次数 * 2（比较和可能的交换）
+    let stepCount = 0
+    for (let i = 0; i < data.length - 1; i++) {
+      const roundSteps = (data.length - 1 - i) * 2 + 1 // 比较步骤 + 结束步骤
+      stepCount += roundSteps
+
+      if (currentStep <= stepCount) {
+        currentRound = i + 1
+        break
+      }
+    }
+  }
+
+  console.log('Debug - Step:', currentStep, 'Comparison:', comparison, 'CurrentRound:', currentRound, 'DataLength:', data.length)
 
   const colors = data.map((_, index) => {
     if (comparison) {
@@ -92,15 +54,22 @@ const updateChartWithColors = (data: number[], comparison?: { i: number; j: numb
       if (index === comparison.i || index === comparison.j) {
         return '#ff4757' // 红色 - 正在比较的元素
       }
-      // 已经排序完成的部分（从右往左）
-      // 每完成一轮，最右边的元素就排序完成
-      if (index >= data.length - sortedCount && sortedCount > 0) {
+    }
+
+    // 计算已排序的元素数量
+    // 只有在没有比较状态时，才显示已排序的部分
+    if (!comparison && currentRound > 0) {
+      // 已排序的元素从右往左计算
+      if (index >= data.length - currentRound) {
         return '#2ed573' // 绿色 - 已排序
       }
     }
+
     // 默认颜色 - 未排序的部分
     return '#3742fa' // 蓝色 - 未排序
   })
+
+  console.log('Step:', currentStep, 'Round:', currentRound, 'Colors:', colors) // 调试信息
 
   chart.setOption({
     title: {
@@ -120,14 +89,14 @@ const updateChartWithColors = (data: number[], comparison?: { i: number; j: numb
           if (dataIndex === comparison.i || dataIndex === comparison.j) {
             status = ' (正在比较)'
           } else {
-            if (dataIndex >= data.length - sortedCount && sortedCount > 0) {
-              status = ' (已排序)'
-            } else {
-              status = ' (未排序)'
-            }
+            status = ' (未排序)'
           }
         } else {
-          status = ' (未排序)'
+          if (dataIndex >= data.length - currentRound && currentRound > 0) {
+            status = ' (已排序)'
+          } else {
+            status = ' (未排序)'
+          }
         }
         return `索引 ${dataIndex + 1}: ${value}${status}`
       }
@@ -148,6 +117,16 @@ const updateChartWithColors = (data: number[], comparison?: { i: number; j: numb
             return colors[params.dataIndex]
           },
         },
+        label: {
+          show: true,
+          position: 'top',
+          fontSize: 12,
+          color: '#333',
+          fontWeight: 'bold',
+          formatter: function (params: { value: number }) {
+            return params.value.toString()
+          }
+        },
         animation: true,
         animationDuration: 500,
         animationEasing: 'cubicOut'
@@ -159,7 +138,7 @@ const updateChartWithColors = (data: number[], comparison?: { i: number; j: numb
 // 生成排序步骤
 const generateSortingSteps = (arr: number[]) => {
   const steps: Array<{ data: number[]; comparison?: { i: number; j: number } }> = [
-    { data: arr.slice() } // 初始状态，没有比较
+    { data: arr.slice() }
   ]
   const len = arr.length
 
@@ -181,7 +160,6 @@ const generateSortingSteps = (arr: number[]) => {
       }
     }
     // 每轮结束后，添加一个没有比较状态的步骤，显示已排序的部分
-    // 注意：第一轮结束后，最右边的元素已经排序完成
     steps.push({
       data: arr.slice()
     })
@@ -237,35 +215,15 @@ const startSort = () => {
         progressText.value = `比较 ${val1} 和 ${val2}，${val1} ≤ ${val2}，保持位置`
       }
     } else {
-      // 计算当前轮数
-      const sortedCount = getSortedCount()
-      if (sortedCount > 0 && sortedCount < numbers.length - 1) {
-        progressText.value = `第 ${sortedCount} 轮排序完成，${sortedCount} 个元素已排序`
-      } else if (currentStep === 0) {
-        progressText.value = '准备开始排序...'
-      } else if (sortedCount === 0) {
-        progressText.value = '开始第一轮排序...'
-      }
+      progressText.value = `第 ${Math.floor(currentStep / (numbers.length - 1)) + 1} 轮排序完成`
     }
   }, 1000) // 增加到1秒，更容易观察
-}
-
-// 处理输入框回车事件
-const handleInputEnter = () => {
-    handleAddHistory(inputNumbers.value)
-  startSort()
 }
 
 // 组件挂载时初始化
 onMounted(() => {
   console.log(inputNumbers.value)
   window.addEventListener('resize', () => chart?.resize())
-
-  // 页面加载后自动开始排序演示
-  setTimeout(() => {
-    isInitializing.value = false
-    startSort()
-  }, 500) // 延迟500ms确保组件完全渲染
 })
 
 // 组件卸载时清理
@@ -282,29 +240,14 @@ onUnmounted(() => {
       <div class="top">
         <a-space direction="vertical" style="width: 40%; margin-right: 20px">
           <a-input v-model:value="inputNumbers" placeholder="请输入一组您想要排序的数，用逗号分隔" style="height: 40px"
-            @keyup.enter="handleInputEnter" />
+            @keyup.enter="startSort" />
         </a-space>
         <a-button type="primary" :icon="h(CaretRightOutlined)" style="height: 40px; margin-right: 20px"
-          @click="handleInputEnter">开始演示</a-button>
+          @click="startSort" :disabled="isSorting">开始演示</a-button>
         <a-button :icon="h(UndoOutlined)" style="height: 40px" @click="reset">重置</a-button>
       </div>
-      <!-- 在 .top 区域按钮组后面添加 -->
-<!----<a-button style="height: 40px; margin-left: 10px" @click="showHistory = true">历史记录</a-button>
-<a-modal v-model:open="showHistory" title="历史记录" width="400px" :footer="null">
-  <a-list :data-source="historyList" bordered>
-    <template #renderItem="{ item }">
-      <a-list-item>
-        <div>
-          <div><strong>内容：</strong>{{ item.details }}</div>
-          <div style="font-size:12px;color:#888;"><strong>时间：</strong>{{ item.createTime }}</div>
-        </div>
-      </a-list-item>
-    </template>
-  </a-list>
-</a-modal>-->
-      <div class="progress-info" v-if="isSorting || progressText || isInitializing">
-        <a-alert :message="isInitializing ? '正在初始化排序演示...' : progressText" :type="isInitializing ? 'warning' : 'info'"
-          show-icon :closable="false" style="margin-bottom: 10px;" />
+      <div class="progress-info" v-if="isSorting || progressText">
+        <a-alert :message="progressText" type="info" show-icon :closable="false" style="margin-bottom: 10px;" />
       </div>
       <div class="bottom">
         <div class="chart-container" ref="chartContainer"></div>
@@ -313,11 +256,11 @@ onUnmounted(() => {
     <div class="right">
       <div class="content">
         <h2>冒泡排序算法</h2>
-        <!-- <div class="section">
+        <div class="section">
           <p>
             冒泡排序是一种简单的排序算法。它重复地遍历要排序的序列，依次比较两个元素，如果他们的顺序错误就把他们交换过来。
           </p>
-        </div> -->
+        </div>
         <div class="section">
           <h3>算法原理</h3>
           <p>
@@ -419,9 +362,6 @@ function bubbleSort(arr) {
   background-color: #fff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   padding: 10px;
-  overflow-y: auto;
-  scrollbar-width: none; 
-  -ms-overflow-style: none; 
 }
 
 .content {

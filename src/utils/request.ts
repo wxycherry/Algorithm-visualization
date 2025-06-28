@@ -3,7 +3,6 @@ import type { AxiosInstance } from 'axios'
 import router from '@/router'
 import { useUserStore } from '@/store/index'
 
-
 const userStore = useUserStore()
 const token = userStore.token
 // 配置新建一个 axios 实例
@@ -35,8 +34,7 @@ service.interceptors.request.use(
       console.log('携带token:', token)
       config.headers.Authorization = token
       // 或者 config.headers.Authorization = `Bearer ${token}` 视后端要求
-    }
-    else{
+    } else {
       console.log('未携带token')
     }
     return config
